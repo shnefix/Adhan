@@ -65,12 +65,15 @@ import com.example.prayeralarm.ui.theme.TextSecondary
 fun MainScreen() {
     val context = LocalContext.current.applicationContext as PrayerAlarmApplication
     val locationRepository = context.locationRepository
+    val clock = java.time.Clock.systemUTC()
 
     val homeViewModel: HomeViewModel = viewModel(
         factory = HomeViewModel.Factory(
             repository = locationRepository,
             alarmPlanPreferences = context.alarmPlanPreferences,
-            notificationContext = context.applicationContext
+            notificationContext = context.applicationContext,
+            calculationSettings = context.preferencesManager.calculationSettings,
+            clock = clock
         )
     )
     val locationsViewModel: LocationsViewModel = viewModel(
@@ -86,7 +89,8 @@ fun MainScreen() {
         factory = PrayerAlarmSchedulingViewModel.Factory(
             locationRepository = locationRepository,
             alarmPreferences = context.alarmPlanPreferences,
-            scheduler = context.prayerAlarmScheduler
+            scheduler = context.prayerAlarmScheduler,
+            calculationSettings = context.preferencesManager.calculationSettings
         )
     )
 

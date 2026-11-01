@@ -8,6 +8,8 @@ import com.example.prayeralarm.data.notification.NotificationHelper
 import com.example.prayeralarm.data.repository.LocationRepository
 import com.example.prayeralarm.data.repository.LocationRepositoryImpl
 import com.example.prayeralarm.alarm.AndroidAlarmScheduler
+import com.example.prayeralarm.alarm.DismissedSeries
+import com.example.prayeralarm.alarm.LegacyAlarms
 import com.example.prayeralarm.alarm.PrayerAlarmScheduler
 import com.example.prayeralarm.ui.alarms.AlarmPlanPreferences
 import com.example.prayeralarm.ui.alarms.DataStoreAlarmPlanPreferences
@@ -51,9 +53,11 @@ class PrayerAlarmApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        DismissedSeries.init(this)
         NotificationHelper.init(this)
         // Seed exactly once on a fresh install and repair a missing/dangling selection.
         applicationScope.launch {
+            LegacyAlarms.cancel(this@PrayerAlarmApplication)
             LocationSeeder(
                 locationDao = database.locationDao(),
                 selectionStore = preferencesManager
@@ -61,3 +65,4 @@ class PrayerAlarmApplication : Application() {
         }
     }
 }
+

@@ -65,6 +65,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.example.prayeralarm.alarm.CountdownNotificationService
 import com.example.prayeralarm.domain.calculator.PrayerCalculationMethod
+import com.batoulapps.adhan.Madhab
 import com.example.prayeralarm.ui.alarms.AlarmPlanViewModel
 import com.example.prayeralarm.ui.theme.GoldPrimary
 import com.example.prayeralarm.ui.theme.GoldContainer
@@ -97,6 +98,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val selectedLocation by viewModel.selectedLocation.collectAsState(initial = null)
     val calculationMethod by viewModel.calculationMethod.collectAsState(initial = PrayerCalculationMethod.DEFAULT)
+    val madhab by viewModel.madhab.collectAsState(initial = Madhab.SHAFI)
     val planConfig by alarmPlanViewModel.config.collectAsState()
 
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -243,6 +245,17 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+        }
+
+        SectionLabel("Asr calculation", "Standard is used by Shafi'i, Maliki, and Hanbali. Hanafi gives a later Asr.")
+        SettingsCard {
+            SettingsItem(icon = Icons.Default.WbSunny, title = "Hanafi Asr",
+                subtitle = if (madhab == Madhab.HANAFI) "Shadow = 2× object height" else "Shadow = 1× object height") {
+                Switch(checked = madhab == Madhab.HANAFI,
+                    onCheckedChange = { viewModel.setMadhab(if (it) Madhab.HANAFI else Madhab.SHAFI) },
+                    colors = SwitchDefaults.colors(checkedThumbColor = NavyDark, checkedTrackColor = GoldPrimary,
+                        uncheckedThumbColor = TextSecondary, uncheckedTrackColor = NavyCard, uncheckedBorderColor = NavyBorder))
             }
         }
 

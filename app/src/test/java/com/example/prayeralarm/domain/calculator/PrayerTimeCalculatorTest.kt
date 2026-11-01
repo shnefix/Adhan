@@ -76,10 +76,10 @@ class PrayerTimeCalculatorTest {
         val method = PrayerCalculationMethod.DEFAULT
 
         assertEquals(PrayerCalculationMethod.TUNISIA, method)
-        assertEquals(18.0, method.fajrAngle, 0.0)
-        assertEquals(18.0, method.ishaAngle, 0.0)
-        assertEquals(com.batoulapps.adhan.Madhab.SHAFI, method.madhab)
-        assertEquals("Tunisia (18°/18°, standard Asr)", method.displayName)
+        assertEquals("Tunisia (18°/18°)", method.displayName)
+        val params = method.createParameters()
+        assertEquals(18.0, params.fajrAngle, 0.0)
+        assertEquals(18.0, params.ishaAngle, 0.0)
     }
 
     @Test
@@ -319,7 +319,25 @@ class PrayerTimeCalculatorTest {
         assertEquals(todayFajrTime, timetable.items.first { it.type == PrayerType.FAJR }.time)
     }
 
-    private fun assertTimeNear(
+    @Test fun everyMethod_isChronological() {
+        PrayerCalculationMethod.values().forEach { m ->
+            val t = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, m)
+            val order = listOf(PrayerType.FAJR, PrayerType.DHUHR, PrayerType.ASR, PrayerType.MAGHRIB, PrayerType.ISHA)
+                .map { t.prayerDateTimes[it]!! }
+            assertEquals(order.sorted(), order)
+        }
+    }
+    @Test fun hanafiAsr_isLaterThanStandard() {
+        val std = PrayerTimeCalculator.calculateTimetable(mahdia, testDate).prayerDateTimes[PrayerType.ASR]!!
+        val han = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, madhab = com.batoulapps.adhan.Madhab.HANAFI).prayerDateTimes[PrayerType.ASR]!!
+        assertTrue(han.isAfter(std))
+    }
+    @Test fun methodChoice_changesFajr() {
+        val a = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, PrayerCalculationMethod.EGYPTIAN)
+        val b = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, PrayerCalculationMethod.NORTH_AMERICA)
+        assertTrue(a.prayerDateTimes[PrayerType.FAJR]!!.isBefore(b.prayerDateTimes[PrayerType.FAJR]!!))
+    }
+private fun assertTimeNear(
         label: String,
         expected: LocalTime,
         actual: java.time.ZonedDateTime,

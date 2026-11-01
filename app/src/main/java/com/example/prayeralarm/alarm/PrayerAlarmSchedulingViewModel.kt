@@ -4,93 +4,66 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.prayeralarm.data.repository.LocationRepository
+import com.example.prayeralarm.domain.calculator.PrayerCalculationSettings
 import com.example.prayeralarm.ui.alarms.AlarmPlanPreferences
-import com.example.prayeralarm.domain.calculator.PrayerTimeCalculator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Clock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import com.example.prayeralarm.domain.model.SavedLocation
-import com.example.prayeralarm.domain.model.PrayerType
 
+/**
+ * Keeps AlarmManager in sync while the app is open: any change to the active location,
+ * alarm settings (mode, minutes, sound, switches) or calculation method/Asr re-plans the
+ * alarms immediately. Reconciliation is stateless and idempotent (see PrayerAlarmCoordinator),
+ * so repeated emissions can never produce duplicates.
+ */
 class PrayerAlarmSchedulingViewModel(
     locationRepository: LocationRepository,
     alarmPreferences: AlarmPlanPreferences,
     private val scheduler: PrayerAlarmScheduler,
+    calculationSettings: Flow<PrayerCalculationSettings>,
     private val clock: Clock = Clock.systemUTC()
 ) : ViewModel() {
 
     private val _status = MutableStateFlow<AlarmReconciliationResult?>(null)
     val status: StateFlow<AlarmReconciliationResult?> = _status.asStateFlow()
 
-    private var existing = emptyList<ScheduledPrayerAlarm>()
-
     init {
         viewModelScope.launch {
             combine(
                 locationRepository.getActiveLocation(),
-                alarmPreferences.config
-            ) { location, config -> location to config }
+                alarmPreferences.config,
+                calculationSettings
+            ) { location, config, settings -> Triple(location, config, settings) }
                 .catch { error ->
                     _status.value = AlarmReconciliationResult.Failed(
                         AlarmScheduleResult.Invalid(error.message ?: "Unable to load alarm inputs.")
                     )
                 }
-                .collectLatest { (location, config) ->
+                .collectLatest { (location, config, settings) ->
                     if (location == null) {
-                        existing = emptyList()
                         _status.value = AlarmReconciliationResult.Applied(emptyList(), emptyList())
                     } else {
-                        reconcile(location, config)
+                        _status.value = withContext(Dispatchers.Default) {
+                            FajrAlarmReconciler.reconcile(scheduler, location, config, settings, clock)
+                        }
                     }
                 }
-        }
-    }
-
-    private fun reconcile(
-        location: SavedLocation,
-        config: com.example.prayeralarm.domain.alarm.AlarmPlanConfig
-    ) {
-        val timeZoneId = location.timeZoneId
-        val locationName = location.name
-        val zone = runCatching { ZoneId.of(timeZoneId) }.getOrElse { ZoneId.of("Africa/Tunis") }
-        val today = LocalDate.now(clock.withZone(zone))
-        val days = listOf(today, today.plusDays(1)).map { date ->
-            FajrScheduleDay(
-                PrayerTimeCalculator.calculateTimetable(
-                    SavedLocation(
-                        name = locationName,
-                        latitude = location.latitude,
-                        longitude = location.longitude,
-                        timeZoneId = timeZoneId
-                    ),
-                    date
-                ).prayerDateTimes[PrayerType.FAJR]!!
-            )
-        }
-        val result = PrayerAlarmCoordinator(scheduler).reconcile(
-            days = days,
-            config = config,
-            now = Instant.now(clock),
-            existing = existing.map { it.copy(locationName = locationName) }
-        )
-        _status.value = result
-        if (result is AlarmReconciliationResult.Applied) {
-            existing = result.desired
         }
     }
 
     class Factory(
         private val locationRepository: LocationRepository,
         private val alarmPreferences: AlarmPlanPreferences,
-        private val scheduler: PrayerAlarmScheduler
+        private val scheduler: PrayerAlarmScheduler,
+        private val calculationSettings: Flow<PrayerCalculationSettings>
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -98,7 +71,8 @@ class PrayerAlarmSchedulingViewModel(
                 return PrayerAlarmSchedulingViewModel(
                     locationRepository,
                     alarmPreferences,
-                    scheduler
+                    scheduler,
+                    calculationSettings
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

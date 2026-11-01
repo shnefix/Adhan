@@ -60,6 +60,7 @@ class CountdownNotificationService : Service() {
             val clock = Clock.systemUTC()
             var cachedLocationId: Long? = null
             var cachedDate: LocalDate? = null
+            var cachedSettings: com.example.prayeralarm.domain.calculator.PrayerCalculationSettings? = null
             var today: CalculatedTimetable? = null
             var tomorrow: CalculatedTimetable? = null
 
@@ -76,13 +77,15 @@ class CountdownNotificationService : Service() {
                     continue
                 }
 
+                val settings = application.preferencesManager.calculationSettings.first()
                 val zone = PrayerTimeCalculator.zoneIdFor(location)
                 val currentDate = LocalDate.now(clock.withZone(zone))
-                if (cachedLocationId != location.id || cachedDate != currentDate) {
+                if (cachedLocationId != location.id || cachedDate != currentDate || cachedSettings != settings) {
                     cachedLocationId = location.id
                     cachedDate = currentDate
-                    today = PrayerTimeCalculator.calculateTimetable(location, currentDate)
-                    tomorrow = PrayerTimeCalculator.calculateTimetable(location, currentDate.plusDays(1))
+                    cachedSettings = settings
+                    today = PrayerTimeCalculator.calculateTimetable(location, currentDate, settings.method, settings.madhab)
+                    tomorrow = PrayerTimeCalculator.calculateTimetable(location, currentDate.plusDays(1), settings.method, settings.madhab)
                 }
 
                 val now = Instant.now(clock)

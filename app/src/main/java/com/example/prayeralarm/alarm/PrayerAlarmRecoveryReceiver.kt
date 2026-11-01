@@ -5,10 +5,6 @@ import android.content.Context
 import android.content.Intent
 import com.example.prayeralarm.PrayerAlarmApplication
 import com.example.prayeralarm.data.notification.NotificationHelper
-import com.example.prayeralarm.domain.alarm.AlarmPlanConfig
-import com.example.prayeralarm.domain.alarm.AlarmPlanGenerator
-import com.example.prayeralarm.domain.model.PrayerType
-import com.example.prayeralarm.domain.model.SavedLocation
 import com.example.prayeralarm.domain.calculator.PrayerTimeCalculator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +14,11 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 
+/**
+ * Re-applies alarms and the countdown notification after reboot, app update, date change,
+ * manual time change and time-zone change. AlarmManager forgets all alarms on reboot.
+ */
 class PrayerAlarmRecoveryReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -35,32 +34,35 @@ class PrayerAlarmRecoveryReceiver : BroadcastReceiver() {
     }
 
     private suspend fun reconcile(application: PrayerAlarmApplication) {
+        LegacyAlarms.cancel(application)
+
         val location = application.locationRepository.getActiveLocation().first()
         val config = application.alarmPlanPreferences.config.first()
         if (location == null) {
             NotificationHelper.cancel(application)
             return
         }
+        val settings = application.preferencesManager.calculationSettings.first()
 
-        val zone = runCatching { ZoneId.of(location.timeZoneId) }
-            .getOrElse { ZoneId.of("Africa/Tunis") }
-        val clock = Clock.systemUTC()
-        val today = LocalDate.now(clock.withZone(zone))
-        val todayTimetable = PrayerTimeCalculator.calculateTimetable(location, today)
-        val tomorrowTimetable =
-            PrayerTimeCalculator.calculateTimetable(location, today.plusDays(1))
-        val days = listOf(todayTimetable, tomorrowTimetable).map { timetable ->
-            FajrScheduleDay(timetable.prayerDateTimes[PrayerType.FAJR]!!)
-        }
-        val coordinator = PrayerAlarmCoordinator(application.prayerAlarmScheduler)
-        val existing = candidateAlarms(days, config, location.name, coordinator)
-        coordinator.reconcile(days, config, Instant.now(clock), existing)
+        FajrAlarmReconciler.reconcile(
+            scheduler = application.prayerAlarmScheduler,
+            location = location,
+            config = config,
+            settings = settings
+        )
 
         if (!config.enabled) {
             NotificationHelper.cancel(application)
             return
         }
 
+        val clock = Clock.systemUTC()
+        val zone = PrayerTimeCalculator.zoneIdFor(location)
+        val today = LocalDate.now(clock.withZone(zone))
+        val todayTimetable =
+            PrayerTimeCalculator.calculateTimetable(location, today, settings.method, settings.madhab)
+        val tomorrowTimetable =
+            PrayerTimeCalculator.calculateTimetable(location, today.plusDays(1), settings.method, settings.madhab)
         val now = Instant.now(clock)
         val countdown = PrayerTimeCalculator.computeNextPrayerAndCountdown(
             location = location,
@@ -79,32 +81,5 @@ class PrayerAlarmRecoveryReceiver : BroadcastReceiver() {
             remainingMillis = remainingMillis
         )
         CountdownNotificationService.start(application)
-    }
-
-    private fun candidateAlarms(
-        days: List<FajrScheduleDay>,
-        config: AlarmPlanConfig,
-        locationName: String,
-        coordinator: PrayerAlarmCoordinator
-    ): List<ScheduledPrayerAlarm> {
-        val enabledConfig = config.copy(enabled = true)
-        return days.flatMap { day ->
-            val generated = AlarmPlanGenerator.generate(
-                day.fajrAt.toLocalDateTime(),
-                enabledConfig
-            )
-            (generated as? com.example.prayeralarm.domain.alarm.AlarmPlanResult.Success)
-                ?.alarms
-                ?.map { alarm ->
-                    val instant = alarm.scheduledAt.atZone(day.fajrAt.zone).toInstant()
-                    ScheduledPrayerAlarm(
-                        requestCode = coordinator.requestCodeFor(day, alarm.sequence),
-                        triggerAtMillis = instant.toEpochMilli(),
-                        prayerName = "Fajr",
-                        locationName = locationName
-                    )
-                }
-                .orEmpty()
-        }
     }
 }

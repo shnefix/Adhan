@@ -8,7 +8,9 @@ import com.example.prayeralarm.data.repository.LocationRepository
 import com.example.prayeralarm.alarm.CountdownNotificationService
 import com.example.prayeralarm.domain.calculator.CalculatedTimetable
 import com.example.prayeralarm.domain.calculator.NextPrayerCountdown
+import com.example.prayeralarm.domain.calculator.PrayerCalculationSettings
 import com.example.prayeralarm.domain.calculator.PrayerTimeCalculator
+import kotlinx.coroutines.flow.Flow
 import com.example.prayeralarm.domain.model.PrayerType
 import com.example.prayeralarm.domain.model.SavedLocation
 import com.example.prayeralarm.ui.alarms.AlarmPlanPreferences
@@ -33,7 +35,8 @@ class HomeViewModel(
     private val locationRepository: LocationRepository? = null,
     private val clock: Clock = Clock.systemUTC(),
     private val alarmPlanPreferences: AlarmPlanPreferences? = null,
-    private val notificationContext: Context? = null
+    private val notificationContext: Context? = null,
+    private val calculationSettings: Flow<PrayerCalculationSettings>? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -44,10 +47,12 @@ class HomeViewModel(
     private var cachedTimetableDate: LocalDate? = null
     private var cachedTomorrowTimetable: CalculatedTimetable? = null
     private var persistentNotificationEnabled = false
+    private var settings = PrayerCalculationSettings()
 
     init {
         observeActiveLocation()
         observeNotificationPlan()
+        observeCalculationSettings()
         startCountdownTicker()
     }
 
@@ -64,6 +69,13 @@ class HomeViewModel(
                             notificationContext?.let { CountdownNotificationService.stop(it) }
                         }
             }
+        }
+    }
+
+    private fun observeCalculationSettings() {
+        val flow = calculationSettings ?: return
+        viewModelScope.launch {
+            flow.collect { s -> settings = s; activeLocation?.let { recalculateTimetable(it) } }
         }
     }
 
@@ -95,10 +107,10 @@ class HomeViewModel(
         val zoneId = PrayerTimeCalculator.zoneIdFor(location)
 
         val today = LocalDate.now(clock.withZone(zoneId))
-        val timetable = PrayerTimeCalculator.calculateTimetable(location, today)
+        val timetable = PrayerTimeCalculator.calculateTimetable(location, today, settings.method, settings.madhab)
         cachedTimetable = timetable
         cachedTimetableDate = today
-        cachedTomorrowTimetable = PrayerTimeCalculator.calculateTimetable(location, today.plusDays(1))
+        cachedTomorrowTimetable = PrayerTimeCalculator.calculateTimetable(location, today.plusDays(1), settings.method, settings.madhab)
 
         val now = Instant.now(clock)
         val countdown = PrayerTimeCalculator.computeNextPrayerAndCountdown(
@@ -217,7 +229,8 @@ class HomeViewModel(
         private val repository: LocationRepository,
         private val clock: Clock = Clock.systemUTC(),
         private val alarmPlanPreferences: AlarmPlanPreferences? = null,
-        private val notificationContext: Context? = null
+        private val notificationContext: Context? = null,
+        private val calculationSettings: Flow<PrayerCalculationSettings>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -226,7 +239,8 @@ class HomeViewModel(
                     repository,
                     clock,
                     alarmPlanPreferences,
-                    notificationContext
+                    notificationContext,
+                    calculationSettings
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")

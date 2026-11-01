@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.prayeralarm.data.preferences.UserPreferencesManager
 import com.example.prayeralarm.data.repository.LocationRepository
+import com.batoulapps.adhan.Madhab
 import com.example.prayeralarm.domain.calculator.PrayerCalculationMethod
 import com.example.prayeralarm.domain.model.SavedLocation
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,9 @@ class SettingsViewModel(
     /** The named prayer-time calculation convention used by the app. */
     val calculationMethod: Flow<PrayerCalculationMethod> =
         preferencesManager?.calculationMethod ?: flowOf(PrayerCalculationMethod.DEFAULT)
+
+    val madhab: Flow<Madhab> = preferencesManager?.madhab ?: flowOf(Madhab.SHAFI)
+    fun setMadhab(m: Madhab) { preferencesManager?.let { viewModelScope.launch { it.setMadhab(m) } } }
 
     fun setCalculationMethod(method: PrayerCalculationMethod) {
         preferencesManager?.let { prefs ->

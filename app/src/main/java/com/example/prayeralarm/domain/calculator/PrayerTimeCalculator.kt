@@ -1,6 +1,7 @@
 package com.example.prayeralarm.domain.calculator
 
 import com.batoulapps.adhan.Coordinates
+import com.batoulapps.adhan.Madhab
 import com.batoulapps.adhan.data.DateComponents
 import com.example.prayeralarm.domain.model.PrayerType
 import com.example.prayeralarm.domain.model.SavedLocation
@@ -32,7 +33,8 @@ data class CalculatedTimetable(
     val prayerDateTimes: Map<PrayerType, ZonedDateTime>,
     val sunrise: ZonedDateTime,
     val locationZoneId: ZoneId,
-    val calculationMethod: PrayerCalculationMethod
+    val calculationMethod: PrayerCalculationMethod,
+    val madhab: Madhab
 )
 
 /**
@@ -83,7 +85,8 @@ object PrayerTimeCalculator {
     fun calculateTimetable(
         location: SavedLocation,
         date: LocalDate,
-        method: PrayerCalculationMethod = PrayerCalculationMethod.DEFAULT
+        method: PrayerCalculationMethod = PrayerCalculationMethod.DEFAULT,
+        madhab: Madhab = Madhab.SHAFI
     ): CalculatedTimetable {
         val zoneId = zoneIdFor(location)
 
@@ -93,7 +96,7 @@ object PrayerTimeCalculator {
         val adhanPrayerTimes = com.batoulapps.adhan.PrayerTimes(
             coordinates,
             dateComponents,
-            method.createParameters()
+            method.createParameters(madhab)
         )
 
         fun dateToZonedDateTime(dateObj: Date?): ZonedDateTime {
@@ -134,7 +137,8 @@ object PrayerTimeCalculator {
             prayerDateTimes = prayerMap,
             sunrise = sunriseZdt,
             locationZoneId = zoneId,
-            calculationMethod = method
+            calculationMethod = method,
+            madhab = madhab
         )
     }
 

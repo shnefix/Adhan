@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.prayeralarm.data.preferences.UserPreferencesManager
 import com.example.prayeralarm.domain.alarm.AlarmPlanConfig
-import com.example.prayeralarm.domain.alarm.AlarmTimingMode
+import com.example.prayeralarm.domain.alarm.FajrAlarmMode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,18 +30,52 @@ class AlarmPlanViewModel(
         }
     }
 
+    /** Master switch for all Fajr alarms. */
     fun setEnabled(enabled: Boolean) = update { it.copy(enabled = enabled) }
 
-    fun setAlarmCount(count: Int) = update { it.copy(alarmCount = count) }
+    /**
+     * Turning a mode on turns the others off: only one Fajr-related alarm series is ever
+     * active, so there can be no accidental double alarm.
+     */
+    fun setModeEnabled(mode: FajrAlarmMode, enabled: Boolean) = update { config ->
+        fun on(m: FajrAlarmMode) = if (m == mode) enabled else if (enabled) false else config.isModeEnabled(m)
+        config.copy(
+            beforeFajrEnabled = on(FajrAlarmMode.BEFORE_FAJR),
+            qiyamEnabled = on(FajrAlarmMode.QIYAM_AL_LAYL),
+            aroundEnabled = on(FajrAlarmMode.AROUND_FAJR)
+        )
+    }
 
-    fun setIntervalMinutes(interval: Long) = update { it.copy(intervalMinutes = interval) }
+    /** Before & After Fajr: how many alarms ring before Fajr and after it (Fajr itself always rings). */
+    fun setAroundCounts(before: Int? = null, after: Int? = null) = update {
+        it.copy(aroundBefore = before ?: it.aroundBefore, aroundAfter = after ?: it.aroundAfter)
+    }
 
-    fun setTimingMode(mode: AlarmTimingMode) = update { it.copy(timingMode = mode) }
+    fun setMinutes(mode: FajrAlarmMode, minutes: Int) = update { config ->
+        when (mode) {
+            FajrAlarmMode.BEFORE_FAJR -> config.copy(beforeFajrMinutes = minutes)
+            FajrAlarmMode.QIYAM_AL_LAYL -> config.copy(qiyamMinutes = minutes)
+            FajrAlarmMode.AROUND_FAJR -> config
+        }
+    }
+
+    fun setCount(mode: FajrAlarmMode, count: Int) = update { config ->
+        when (mode) {
+            FajrAlarmMode.BEFORE_FAJR -> config.copy(beforeFajrCount = count)
+            FajrAlarmMode.QIYAM_AL_LAYL -> config.copy(qiyamCount = count)
+            FajrAlarmMode.AROUND_FAJR -> config
+        }
+    }
+
+    /** [uri] == null restores the device default alarm sound. */
+    fun setSound(uri: String?, name: String?) =
+        update { it.copy(soundUri = uri, soundName = if (uri == null) null else name) }
 
     private fun update(transform: (AlarmPlanConfig) -> AlarmPlanConfig) {
         val updated = transform(_config.value)
-        if (updated.alarmCount < 1 || updated.intervalMinutes < 1) {
-            _errorMessage.value = "Alarm count and interval must be positive."
+        val problem = updated.validationError()
+        if (problem != null) {
+            _errorMessage.value = problem
             return
         }
         _errorMessage.value = null
