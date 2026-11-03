@@ -22,3 +22,8 @@ compile_output.txt
 latest_build.txt
 *.tmp
 *.bak
+
+# Release signing key and its passwords: never commit these
+keystore.properties
+*.jks
+*.keystore
