@@ -4,37 +4,33 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <path
-        android:fillColor="#0B132B"
-        android:pathData="M0,0h108v108h-108z" />
+    <!-- Sunrise: half sun on the horizon, five rays, a second line below.
+         Everything stays inside the 66dp adaptive-icon safe circle centred at (54,54),
+         so no launcher mask (circle, squircle, teardrop) clips the rays. -->
 
+    <!-- Rays, radial from the sun centre (54,66) at 0°, ±30° and ±60° from vertical -->
     <path
-        android:fillColor="#E8B964"
-        android:pathData="M26,78 L26,70 A28,28 0 0 1 82,70 L82,78 Z" />
-
-    <path
-        android:fillColor="#E8B964"
-        android:pathData="M22,78h64v5h-64z" />
-
-    <path
-        android:fillColor="#0B132B"
-        android:pathData="M48,78 L48,71 A6,6 0 0 1 60,71 L60,78 Z" />
-
-    <path
-        android:pathData="M54,42 L54,37"
-        android:strokeColor="#E8B964"
+        android:pathData="M54,41.25 L54,32.25 M66.38,44.57 L70.88,36.77 M41.62,44.57 L37.12,36.77 M75.43,53.63 L83.23,49.13 M32.57,53.63 L24.77,49.13"
+        android:strokeColor="#66D6AC"
         android:strokeLineCap="round"
-        android:strokeWidth="2.5" />
+        android:strokeWidth="3.6" />
 
-    <group
-        android:pivotX="54"
-        android:pivotY="54"
-        android:scaleX="0.24"
-        android:scaleY="0.24"
-        android:translateX="2"
-        android:translateY="-25">
-        <path
-            android:fillColor="#E8B964"
-            android:pathData="M54,28c-14.36,0 -26,11.64 -26,26s11.64,26 26,26c6.24,0 11.96,-2.2 16.48,-5.88 -12.18,-1.2 -21.68,-11.44 -21.68,-23.92 0,-12.48 9.5,-22.72 21.68,-23.92 -4.52,-3.68 -10.24,-5.88 -16.48,-5.88z" />
-    </group>
+    <!-- Half sun -->
+    <path
+        android:fillColor="#F4B24F"
+        android:pathData="M34,66 A20,20 0 0 1 74,66 Z" />
+
+    <!-- Horizon -->
+    <path
+        android:pathData="M25.5,66.2 L82.5,66.2"
+        android:strokeColor="#F4B24F"
+        android:strokeLineCap="round"
+        android:strokeWidth="3.6" />
+
+    <!-- Line below the horizon -->
+    <path
+        android:pathData="M33,76.5 L75,76.5"
+        android:strokeColor="#66D6AC"
+        android:strokeLineCap="round"
+        android:strokeWidth="3.6" />
 </vector>

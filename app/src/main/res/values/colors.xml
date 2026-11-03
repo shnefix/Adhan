@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="navy_dark">#0B132B</color>
+    <color name="launcher_background">#080B0B</color>
     <color name="notification_countdown">#E8B964</color>
     <color name="notification_text">#F2EFE6</color>
     <color name="notification_bg">#121A33</color>
