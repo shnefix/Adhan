@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="160" height="160" role="img" aria-label="Prayer Alarm logo: a sunrise">
+  <!-- Same artwork as app/src/main/res/drawable/ic_launcher_foreground.xml, enlarged to fill the tile -->
+  <rect x="1" y="1" width="106" height="106" rx="24" fill="#080B0B" stroke="#1F2A2A" stroke-width="1.5"/>
+  <g transform="translate(54 54) scale(1.25) translate(-54 -54)" stroke-linecap="round" stroke-width="3.6" fill="none">
+    <path stroke="#66D6AC" d="M54,41.25 L54,32.25 M66.38,44.57 L70.88,36.77 M41.62,44.57 L37.12,36.77 M75.43,53.63 L83.23,49.13 M32.57,53.63 L24.77,49.13"/>
+    <path fill="#F4B24F" stroke="none" d="M34,66 A20,20 0 0 1 74,66 Z"/>
+    <path stroke="#F4B24F" d="M25.5,66.2 L82.5,66.2"/>
+    <path stroke="#66D6AC" d="M33,76.5 L75,76.5"/>
+  </g>
+</svg>
