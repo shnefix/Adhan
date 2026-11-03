@@ -1,6 +1,6 @@
-# Kotlin Fundamentals in Prayer Alarm
+# Kotlin Fundamentals in Adhan
 
-This document outlines key Kotlin language patterns and idioms used throughout the Prayer Alarm codebase, accompanied by actual examples and step-by-step explanations.
+This document outlines key Kotlin language patterns and idioms used throughout the Adhan codebase, accompanied by actual examples and step-by-step explanations.
 
 ---
 
@@ -15,7 +15,7 @@ In Kotlin, the type system distinguishes between references that can hold `null`
 - Safe call: `val time = nextPrayer?.time` (evaluates to null if `nextPrayer` is null, without throwing an exception).
 - Elvis operator: `val displayName = location.name ?: "Unknown Location"`.
 
-### Where it appears in Prayer Alarm:
+### Where it appears in Adhan:
 When calculating the next prayer, if all prayers for the current day have passed, the search returns a nullable result until the next day's Fajr is computed.
 
 ---
@@ -83,7 +83,7 @@ A reactive asynchronous data stream that emits multiple values sequentially over
 ### What they are
 Kotlin allows you to add new functions to an existing class without having to inherit from it or modify its source code.
 
-### Example in Prayer Alarm (Formatting dates and durations):
+### Example in Adhan (Formatting dates and durations):
 ```kotlin
 fun Duration.toCountdownString(): String {
     val totalSeconds = this.seconds

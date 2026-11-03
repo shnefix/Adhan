@@ -1,6 +1,6 @@
 # Data and Persistence: Room & DataStore
 
-Prayer Alarm is designed to work 100% offline without cloud accounts (location lookup and city search are optional conveniences). This makes robust local device persistence essential.
+Adhan is designed to work 100% offline without cloud accounts (location lookup and city search are optional conveniences). This makes robust local device persistence essential.
 
 ---
 

@@ -1,6 +1,6 @@
 # Engineering Decisions & Tradeoffs
 
-Every architecture involves tradeoffs. This document records critical design choices made in Prayer Alarm, the alternatives considered, and the technical justification.
+Every architecture involves tradeoffs. This document records critical design choices made in Adhan, the alternatives considered, and the technical justification.
 
 ---
 

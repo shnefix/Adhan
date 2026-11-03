@@ -1,6 +1,6 @@
 # Application Architecture & Data Flow
 
-Prayer Alarm adheres to official Android application architecture guidelines, implementing a clean, reactive **MVVM (Model-View-ViewModel)** architecture with unidirectional data flow (UDF).
+Adhan adheres to official Android application architecture guidelines, implementing a clean, reactive **MVVM (Model-View-ViewModel)** architecture with unidirectional data flow (UDF).
 
 ---
 

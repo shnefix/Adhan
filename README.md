@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="docs/images/logo.svg" alt="Prayer Alarm logo" width="128" height="128">
+<img src="docs/images/logo.svg" alt="Adhan logo" width="128" height="128">
 
-# Prayer Alarm
+# Adhan
 
 **Accurate prayer times and Fajr alarms for Android.**
 
@@ -16,7 +16,7 @@ Free and open source. No login, no subscription, no ads.
 
 ---
 
-## Why Prayer Alarm
+## Why Adhan
 
 - **100% free.** No subscription, no in-app purchases, no premium tier. Every feature is for everyone.
 - **No account.** Nothing to sign up for or log in to. Install it and it works.
@@ -44,7 +44,8 @@ Free and open source. No login, no subscription, no ads.
 ## Features
 
 - **Prayer times calculated on your phone** with the
-  [Adhan](https://github.com/batoulapps/adhan-java) astronomical library. Choose the method
+  open-source [adhan-java](https://github.com/batoulapps/adhan-java) astronomical library
+  by Batoul Apps. Choose the method
   (Tunisia 18°/18° by default, Muslim World League, Egyptian, Karachi, Umm al-Qura, ISNA)
   and Shafi'i or Hanafi Asr.
 - **Next-prayer countdown** on the home screen, plus an optional notification, with the Hijri date.
@@ -65,7 +66,7 @@ Free and open source. No login, no subscription, no ads.
 1. Download the latest `app-release.apk` from the
    [Releases page](https://github.com/shnefix/adhan/releases).
 2. Open it on your phone. If asked, allow your browser or file manager to "install unknown apps".
-3. Open **Prayer Alarm**, pick or add your location, and turn on Fajr alarms if you want them.
+3. Open **Adhan**, pick or add your location, and turn on Fajr alarms if you want them.
 
 Requires Android 8.0 or newer.
 

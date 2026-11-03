@@ -1,8 +1,8 @@
-# Project Overview: Prayer Alarm
+# Project Overview: Adhan
 
 ## 1. High-Level Vision
 
-**Prayer Alarm** is a native Android application engineered to help Muslims punctually observe the five daily prayers (Fajr, Dhuhr, Asr, Maghrib, Isha) with a special focus on customizable waking alarms for **Fajr**.
+**Adhan** is a native Android application engineered to help Muslims punctually observe the five daily prayers (Fajr, Dhuhr, Asr, Maghrib, Isha) with a special focus on customizable waking alarms for **Fajr**.
 
 The project is built on three core pillars:
 1. **Mathematical Autonomy**: All prayer times are computed on-device using astronomical algorithms and documented configurable assumptions. No background location, third-party backend servers, or paid APIs are used; location access is optional and one-shot (see Decisions §1).

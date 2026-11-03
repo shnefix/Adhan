@@ -1,6 +1,6 @@
 # Testing and Debugging Guide
 
-Testing strategy, execution procedures, and debugging workflows for Prayer Alarm.
+Testing strategy, execution procedures, and debugging workflows for Adhan.
 
 ---
 
@@ -64,7 +64,7 @@ Output location:
 
 Follow these steps on your connected Android phone:
 
-1. **Launch App**: Open Prayer Alarm.
+1. **Launch App**: Open Adhan.
 2. **Observe Home Screen**: The header pill displays **"Mahdia"** (seeded default location).
 3. **Navigate to Locations**:
    - Tap the location pill on Home, or tap the **Locations** icon in the bottom navigation bar.
@@ -100,7 +100,7 @@ Follow these steps on your connected Android phone:
 8. **Verify Persistence Across App Restarts**:
    - Select "Ariana" as active.
    - Force-close the app from the Android App Switcher (swipe it away).
-   - Re-launch Prayer Alarm.
+   - Re-launch Adhan.
    - Verify "Ariana" remains selected as the active location on both the Home Screen and the Locations Screen.
 
 ## 6. Alarm and recovery checks

@@ -1,6 +1,6 @@
 # Technology Stack & Selection Rationale
 
-Every technology and library selected for the Prayer Alarm project was chosen based on stability, battery impact, modern Android engineering practices, and adherence to Android platform limits.
+Every technology and library selected for the Adhan project was chosen based on stability, battery impact, modern Android engineering practices, and adherence to Android platform limits.
 
 ---
 
@@ -52,7 +52,7 @@ Every technology and library selected for the Prayer Alarm project was chosen ba
 
 ## 5. System Android APIs (No external dependencies)
 
-| Android System Service | Purpose in Prayer Alarm | Why Not a 3rd-party Library? |
+| Android System Service | Purpose in Adhan | Why Not a 3rd-party Library? |
 | :--- | :--- | :--- |
 | **`AlarmManager`** | Exact wake-up alarms (`setExactAndAllowWhileIdle`) | Hardware-level RTC alarms wake the CPU from deep sleep. WorkManager is unsuitable because it is deferred and inexact. |
 | **`BroadcastReceiver`** | Receiving alarm triggers & boot events | Android OS communicates system events (`ACTION_BOOT_COMPLETED`, `TIME_SET`, `TIMEZONE_CHANGED`) via broadcasts. |

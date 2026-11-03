@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes, fixes, and milestones across the 10 stages of the Prayer Alarm development lifecycle will be recorded here.
+All notable changes, fixes, and milestones across the 10 stages of the Adhan development lifecycle will be recorded here.
 
 ---
 
@@ -18,7 +18,7 @@ All notable changes, fixes, and milestones across the 10 stages of the Prayer Al
 - `kotlin.daemon.jvmargs=-Xmx2048m` in `gradle.properties` (the compiler ran out of memory).
 
 ### Fixed
-- Prayer times carried random wall-clock milliseconds from the Adhan library, so identical inputs gave slightly different instants (countdowns/alarms off by up to a minute). Times are now truncated to whole seconds.
+- Prayer times carried random wall-clock milliseconds from the adhan-java library, so identical inputs gave slightly different instants (countdowns/alarms off by up to a minute). Times are now truncated to whole seconds.
 - After Isha, the fallback calculation of tomorrow's Fajr ignored the user's calculation method and madhab.
 - Polar day/night (no sunrise or sunset) produced 12:00 placeholders. Times now come from the nearest latitude where the sun rises and sets (65°), flagged by `CalculatedTimetable.usedNearestLatitude`.
 

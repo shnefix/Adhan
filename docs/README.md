@@ -1,6 +1,6 @@
-# Prayer Ala    rm Documentation Index
+# Adhan Documentation Index
 
-Welcome to the comprehensive documentation system for the **Prayer Alarm** native Android application.
+Welcome to the comprehensive documentation system for the **Adhan** native Android application.
 
 This documentation is written to accompany the codebase step by step. Whether you are learning Android development, Kotlin, Jetpack Compose, or advanced background execution, each topic is broken down with real code references, architecture diagrams, step-by-step executions, and revision exercises.
 
@@ -22,7 +22,7 @@ For someone learning native Android development or exploring this codebase for t
 | **8** | [Architecture](ARCHITECTURE.md) | MVVM architecture, unidirectional data flow (UDF), domain boundaries, and data layer separation. |
 | **9** | [Data and Persistence](DATA_AND_PERSISTENCE.md) | Room database, DAOs, entities, migrations, DataStore, and persistent user preferences. |
 | **10** | [Prayer Time Calculation](PRAYER_TIME_CALCULATION.md) | Solar astronomy, Tunisian official calculation conventions, equation of time, solar depression angles, and validation against official timetables. |
-| **11** | [Alarms and Notifications](ALARMS_AND_NOTIFICATIONS.md) | The heart of Prayer Alarm: AlarmManager, exact alarm semantics, broadcast receivers, notification channels, battery optimizations, and boot recovery. |
+| **11** | [Alarms and Notifications](ALARMS_AND_NOTIFICATIONS.md) | The heart of Adhan: AlarmManager, exact alarm semantics, broadcast receivers, notification channels, battery optimizations, and boot recovery. |
 | **12** | [Testing and Debugging](TESTING_AND_DEBUGGING.md) | Unit tests, Android test harness, Logcat debugging, and verifying schedules on real devices. |
 | **13** | [Decisions and Tradeoffs](DECISIONS_AND_TRADEOFFS.md) | Engineering decision log explaining why specific paths were chosen and alternatives rejected. |
 | **14** | [Learning Notes](LEARNING_NOTES.md) | Revision notebook: confusing concepts simplified, common pitfalls to avoid, and key takeaways. |

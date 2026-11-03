@@ -1,6 +1,6 @@
 # Alarms and Notifications: Native Android Execution
 
-The core value proposition of Prayer Alarm is its deterministic waking alarm around Fajr and its persistent next-prayer countdown. On modern Android, background reliability requires strict adherence to system constraints.
+The core value proposition of Adhan is its deterministic waking alarm around Fajr and its persistent next-prayer countdown. On modern Android, background reliability requires strict adherence to system constraints.
 
 ---
 

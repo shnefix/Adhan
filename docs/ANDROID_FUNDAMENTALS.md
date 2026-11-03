@@ -1,4 +1,4 @@
-# Android Fundamentals for Prayer Alarm
+# Android Fundamentals for Adhan
 
 This document breaks down the fundamental Android operating system concepts used in this application. It is tailored for students and engineers learning Android development.
 
@@ -8,7 +8,7 @@ This document breaks down the fundamental Android operating system concepts used
 
 An Android application is not a monolithic binary with a traditional `main()` function. Instead, it consists of distinct **components** instantiated and managed by the Android operating system:
 
-| Component | Class Type | Role in Prayer Alarm |
+| Component | Class Type | Role in Adhan |
 | :--- | :--- | :--- |
 | **Activity** | `MainActivity : ComponentActivity` | The user interface window. Hosts our Jetpack Compose UI. |
 | **BroadcastReceiver** | `BroadcastReceiver` (upcoming) | Receives asynchronous system and hardware intents: exact alarm fires, phone reboots (`ACTION_BOOT_COMPLETED`), or timezone changes. |
@@ -48,7 +48,7 @@ Before Android runs any code in your package, it reads the manifest to know:
 - Which activity should open when the user taps the launcher icon (`<category android:name="android.intent.category.LAUNCHER" />`).
 - Which receivers or services exist so the OS can invoke them even if the app is currently closed.
 
-### Code in Prayer Alarm:
+### Code in Adhan:
 ```xml
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -104,7 +104,7 @@ Permissions are security boundaries enforced by the Linux kernel underneath Andr
 Starting in Android 6.0 (Marshmallow), Android introduced **Doze Mode** to conserve battery:
 - When a phone is stationary, unplugged, and the screen is off, the OS enters deep sleep.
 - Network access is disabled, wake locks are ignored, and standard timers (like `Handler`, `Thread.sleep`, or standard inexact `AlarmManager` calls) are deferred to periodic maintenance windows.
-- **Why this matters for Prayer Alarm**: If we schedule a Fajr alarm at 05:00 using a regular timer, Doze mode might defer it until 05:25 when the user moves the phone!
+- **Why this matters for Adhan**: If we schedule a Fajr alarm at 05:00 using a regular timer, Doze mode might defer it until 05:25 when the user moves the phone!
 - **Our Solution**: We use `AlarmManager.setExactAndAllowWhileIdle()`, which instructs the OS power manager to wake up the device even from deep Doze mode to ring the Fajr alarm at the exact minute requested.
 
 ---

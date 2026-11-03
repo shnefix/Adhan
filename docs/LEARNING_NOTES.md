@@ -1,6 +1,6 @@
 # Learning Notes & Common Android Pitfalls
 
-Practical notes, core concept deep dives, and architectural tips encountered while building Prayer Alarm.
+Practical notes, core concept deep dives, and architectural tips encountered while building Adhan.
 
 ---
 
