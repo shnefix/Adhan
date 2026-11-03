@@ -222,4 +222,4 @@ Commands used:
 .\gradlew.bat assembleDebug
 ```
 
-The debug APK is produced at `app\build\outputs\apk\debug\app-debug.apk`.
+The debug APK is produced at `app\build\outputs\apk\debug\Adhan-1.0-debug.apk`.

@@ -63,8 +63,8 @@ Free and open source. No login, no subscription, no ads.
 
 ## Install
 
-1. Download the latest `app-release.apk` from the
-   [Releases page](https://github.com/shnefix/adhan/releases).
+1. Download the latest `Adhan-<version>.apk` (for example `Adhan-1.0.apk`) from the
+   [Releases page](https://github.com/shnefix/Adhan/releases).
 2. Open it on your phone. If asked, allow your browser or file manager to "install unknown apps".
 3. Open **Adhan**, pick or add your location, and turn on Fajr alarms if you want them.
 

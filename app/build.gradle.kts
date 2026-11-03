@@ -1,3 +1,4 @@
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import java.util.Properties
 
 plugins {
@@ -59,6 +60,15 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+
+    // Name the APKs after the app: Adhan-1.0.apk for release, Adhan-1.0-debug.apk for debug.
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val suffix = if (variant.buildType.name == "release") "" else "-${variant.buildType.name}"
+            (this as BaseVariantOutputImpl).outputFileName = "Adhan-${variant.versionName}$suffix.apk"
+        }
     }
 }
 

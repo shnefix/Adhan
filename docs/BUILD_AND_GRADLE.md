@@ -74,7 +74,7 @@ When you run `assembleDebug`, Gradle executes a DAG (Directed Acyclic Graph) of 
 4. **`kspDebugKotlin`**: Kotlin Symbol Processing scans annotations like `@Entity`, `@Dao`, `@Database` (Room) and generates Kotlin source code before main compilation.
 5. **`compileDebugKotlin`**: Compiles your Kotlin application code (`MainActivity.kt`, theme files) alongside KSP generated classes into JVM bytecode.
 6. **`dexBuilderDebug` & `mergeExtDexDebug`**: Converts Java bytecode into `.dex` files runnable by Android ART.
-7. **`packageDebug`**: Bundles the `.dex` files, compiled resources (`resources.arsc`), and assets into `app-debug.apk`.
+7. **`packageDebug`**: Bundles the `.dex` files, compiled resources (`resources.arsc`), and assets into `Adhan-1.0-debug.apk` (named in `app/build.gradle.kts`).
 8. **`assembleDebug`**: Anchors the debug build lifecycle, outputting the final APK to `app/build/outputs/apk/debug/app-debug.apk`.
 
 ---
