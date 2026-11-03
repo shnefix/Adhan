@@ -4,15 +4,17 @@ Every architecture involves tradeoffs. This document records critical design cho
 
 ---
 
-## 1. No GPS Permission vs. Automatic Geolocation
+## 1. On-Demand Location vs. Background Geolocation
 
-- **Decision**: Zero GPS permission. Manual coordinate entry and preloaded Tunisian city catalog.
-- **Alternatives Considered**: Using Google Play Services `FusedLocationProviderClient` to detect user coordinates automatically.
+- **Decision** (revised 2026-11-03): No background or continuous location. The location form has an optional, one-shot **"Use my current location"** button; manual coordinates and the preloaded Tunisian cities remain the default path.
+- **Original decision**: Zero location permission, manual entry only.
+- **Alternatives Considered**: Google Play Services `FusedLocationProviderClient` with continuous tracking.
 - **Reasoning**:
-  - *Battery Life*: Continuous location tracking drains battery unnecessarily.
-  - *Privacy*: Users should not have to share their physical coordinates with any app to know when to pray.
-  - *Determinism*: Cities do not move. Selecting a city once from a list is completely reliable and works indoors or in airplane mode.
-- **Tradeoff**: When traveling to a new city, the user must select it manually.
+  - *Battery Life*: a single fix when the user taps the button costs nothing measurable; nothing runs in the background.
+  - *Privacy*: the permission is requested only when the button is tapped, approximate location is enough (prayer times barely change within a few km), and the user can still decline and type coordinates.
+  - *No Play Services*: platform `LocationManager` via `LocationManagerCompat`, so de-Googled phones work too.
+  - *Determinism*: the fix only fills the form; saved locations still never move on their own.
+- **Tradeoff**: When traveling, the user still adds or selects the new city manually (now in two taps).
 
 ---
 
@@ -50,6 +52,14 @@ Every architecture involves tradeoffs. This document records critical design cho
 ---
 
 ## 6. Location Search & Geocoding (Phase 3)
+
+> **Implemented differently (2026-11-03):** city search uses the platform `android.location.Geocoder`
+> (no HTTP client, User-Agent, rate limiting or attribution UI to maintain, no extra dependency).
+> The timezone comes from the geocoded country via ICU (`android.icu.util.TimeZone.getAvailableIDs(country)`);
+> for multi-zone countries the zone whose UTC offset is closest to longitude/15 h is picked
+> (`util/TimeZoneGuesser.kt`), and the user can edit it with live suggestions. Tradeoff: some devices
+> ship without a geocoder backend — the search field is then hidden and manual entry still works.
+> The Nominatim/timezonemap plan below is kept as the fallback option if Geocoder proves unreliable.
 
 ### 6.1 Geocoding provider: OpenStreetMap Nominatim
 

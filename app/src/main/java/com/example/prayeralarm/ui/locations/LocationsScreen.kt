@@ -47,7 +47,7 @@ fun LocationsScreen(
     onOpenAddDialog: () -> Unit,
     onOpenEditDialog: (SavedLocation) -> Unit,
     onDismissDialog: () -> Unit,
-    onSaveLocation: (name: String, lat: String, lon: String, tz: String) -> ValidationResult,
+    onSaveLocation: (LocationFormInput) -> ValidationResult,
     onRequestDelete: (SavedLocation) -> Unit,
     onCancelDelete: () -> Unit,
     onConfirmDelete: () -> Unit,
@@ -132,6 +132,7 @@ fun LocationsScreen(
             if (uiState.showAddEditDialog) {
                 AddEditLocationDialog(
                     initialLocation = uiState.editingLocation,
+                    calculationSettings = uiState.calculationSettings,
                     onDismiss = onDismissDialog,
                     onSave = onSaveLocation
                 )

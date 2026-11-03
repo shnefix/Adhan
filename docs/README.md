@@ -12,7 +12,7 @@ For someone learning native Android development or exploring this codebase for t
 
 | Order | Document | Purpose & Summary |
 | :---: | :--- | :--- |
-| **1** | [Project Overview](PROJECT_OVERVIEW.md) | Understand the high-level mission, core requirements, constraints (no GPS, no cloud, Tunisian calculation), and design goals. |
+| **1** | [Project Overview](PROJECT_OVERVIEW.md) | Understand the high-level mission, core requirements, constraints (no background location, no cloud, Tunisian calculation), and design goals. |
 | **2** | [Tech Stack](TECH_STACK.md) | Explore every tool, plugin, library, and framework chosen for this project and the technical justification for each. |
 | **3** | [Build and Gradle](BUILD_AND_GRADLE.md) | **Crucial foundational step**: Learn what Gradle is, how the Gradle Wrapper works, what `assembleDebug` executes, version catalogs, and how caching works. |
 | **4** | [Project Structure](PROJECT_STRUCTURE.md) | A complete tour of the directory hierarchy, files, and where UI, domain, data, and configuration live. |

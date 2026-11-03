@@ -77,7 +77,10 @@ fun MainScreen() {
         )
     )
     val locationsViewModel: LocationsViewModel = viewModel(
-        factory = LocationsViewModel.Factory(locationRepository)
+        factory = LocationsViewModel.Factory(
+            locationRepository,
+            context.preferencesManager.calculationSettings
+        )
     )
     val alarmPlanViewModel: AlarmPlanViewModel = viewModel(
         factory = AlarmPlanViewModel.Factory(context.alarmPlanPreferences)
@@ -169,9 +172,7 @@ fun MainScreen() {
                     onDismissDialog = {
                         locationsViewModel.dismissAddEditDialog()
                     },
-                    onSaveLocation = { name, lat, lon, tz ->
-                        locationsViewModel.saveLocation(name, lat, lon, tz)
-                    },
+                    onSaveLocation = locationsViewModel::saveLocation,
                     onRequestDelete = { location ->
                         locationsViewModel.requestDeleteLocation(location)
                     },

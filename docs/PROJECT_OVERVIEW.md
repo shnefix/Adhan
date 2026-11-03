@@ -5,7 +5,7 @@
 **Prayer Alarm** is a native Android application engineered to help Muslims punctually observe the five daily prayers (Fajr, Dhuhr, Asr, Maghrib, Isha) with a special focus on customizable waking alarms for **Fajr**.
 
 The project is built on three core pillars:
-1. **Mathematical Autonomy**: All prayer times are computed on-device using astronomical algorithms and documented configurable assumptions. No GPS permissions, third-party backend servers, or paid APIs are used.
+1. **Mathematical Autonomy**: All prayer times are computed on-device using astronomical algorithms and documented configurable assumptions. No background location, third-party backend servers, or paid APIs are used; location access is optional and one-shot (see Decisions §1).
 2. **Deterministic Wake-up System**: The project contains a permission-aware exact-alarm boundary using Android's `AlarmManager`; persistence, reconciliation, reboot recovery, and device-specific delivery behavior are not yet complete.
 3. **Transparent & Maintainable Architecture**: Built in Kotlin with Jetpack Compose, Material 3, and MVVM principles, serving as both an everyday utility and a reference educational codebase for modern Android engineering.
 
@@ -21,7 +21,7 @@ The project is built on three core pillars:
 ### B. Location Management
 - Seeds Mahdia, Kelibia, and Ariana on a fresh database, with capability to add, edit, select, or delete custom locations.
 - Works entirely offline using coordinates (Latitude/Longitude) and standard IANA Timezone IDs (e.g., `Africa/Tunis`).
-- Zero GPS permission requests: protects user battery and privacy.
+- No background location: the permission is only asked for when the user taps "Use my current location".
 
 ### C. Configurable Fajr Alarm System
 - Multi-alarm configuration: supports setting any number of sequential alarms (not hardcoded to 1 or 2).

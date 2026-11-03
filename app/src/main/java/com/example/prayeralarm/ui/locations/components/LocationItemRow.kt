@@ -126,6 +126,18 @@ fun LocationItemRow(
                         style = MaterialTheme.typography.bodySmall,
                         color = TextSecondary
                     )
+
+                    val extras = listOfNotNull(
+                        location.calculationMethod?.displayName,
+                        "times fine-tuned".takeUnless { location.adjustments.isEmpty }
+                    )
+                    if (extras.isNotEmpty()) {
+                        Text(
+                            text = extras.joinToString(" • "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextTertiary
+                        )
+                    }
                 }
             }
 

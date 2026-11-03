@@ -11,3 +11,14 @@
 *.apk
 *.aab
 PrayerAlarmApplication.kt.corrupted.bak
+
+# Kotlin compiler crash logs
+.kotlin/
+
+# Scratch output from local builds and debugging sessions
+*.log
+build_out*.txt
+compile_output.txt
+latest_build.txt
+*.tmp
+*.bak

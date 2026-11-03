@@ -11,7 +11,10 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 import java.util.Date
+import kotlin.math.abs
+import kotlin.math.sign
 
 /**
  * Result of timetable calculation for a specific location and calendar date.
@@ -25,7 +28,9 @@ import java.util.Date
  * @property sunrise Sunrise (Shuruq) in the location's timezone. Sunrise is not one of the
  *   five obligatory prayers, so it is exposed separately instead of adding a [PrayerType].
  * @property locationZoneId The resolved IANA zone used for every timestamp in this result
- * @property calculationMethod The named convention used for Fajr/Isha/Asr
+ * @property calculationMethod The named convention actually used (the location's override, if any)
+ * @property usedNearestLatitude True when the sun never rises or sets at this location on [date]
+ *   (polar day/night) and times were taken from the nearest latitude where it does.
  */
 data class CalculatedTimetable(
     val date: LocalDate,
@@ -34,7 +39,8 @@ data class CalculatedTimetable(
     val sunrise: ZonedDateTime,
     val locationZoneId: ZoneId,
     val calculationMethod: PrayerCalculationMethod,
-    val madhab: Madhab
+    val madhab: Madhab,
+    val usedNearestLatitude: Boolean = false
 )
 
 /**
@@ -59,6 +65,12 @@ data class NextPrayerCountdown(
  */
 object PrayerTimeCalculator {
 
+    /**
+     * Latitude used instead of the real one during polar day/night ("aqrab al-bilad").
+     * Just below the Arctic/Antarctic circle the sun rises and sets every day of the year.
+     */
+    const val NEAREST_LATITUDE = 65.0
+
     /** Safe fallback only for corrupt persisted data; valid user input is validated before saving. */
     private val FALLBACK_ZONE: ZoneId = ZoneId.of("Africa/Tunis")
 
@@ -77,9 +89,10 @@ object PrayerTimeCalculator {
     /**
      * Calculates the five daily prayers and sunrise for a location and local date.
      *
-     * @param location SavedLocation with latitude, longitude, and IANA timezone ID
+     * @param location SavedLocation with latitude, longitude, IANA timezone ID and minute adjustments
      * @param date Local calendar date in the location's timezone
-     * @param method Named calculation convention (defaults to [PrayerCalculationMethod.DEFAULT])
+     * @param method App-wide calculation convention; the location's own
+     *   [SavedLocation.calculationMethod] takes precedence when set
      * @return CalculatedTimetable containing prayer rows, exact ZonedDateTimes, sunrise, and metadata
      */
     fun calculateTimetable(
@@ -89,31 +102,46 @@ object PrayerTimeCalculator {
         madhab: Madhab = Madhab.SHAFI
     ): CalculatedTimetable {
         val zoneId = zoneIdFor(location)
-
-        val coordinates = Coordinates(location.latitude, location.longitude)
+        val effectiveMethod = location.calculationMethod ?: method
         val dateComponents = DateComponents(date.year, date.monthValue, date.dayOfMonth)
 
-        val adhanPrayerTimes = com.batoulapps.adhan.PrayerTimes(
-            coordinates,
+        fun adhanTimesAt(latitude: Double) = com.batoulapps.adhan.PrayerTimes(
+            Coordinates(latitude, location.longitude),
             dateComponents,
-            method.createParameters(madhab)
+            effectiveMethod.createParameters(madhab)
         )
+
+        // Fajr/Isha at high latitudes are already handled by Adhan's HighLatitudeRule; what it
+        // cannot handle is a day with no sunrise or sunset at all, where it returns nulls.
+        var adhanPrayerTimes = adhanTimesAt(location.latitude)
+        val polar = adhanPrayerTimes.hasMissingTimes() && abs(location.latitude) > NEAREST_LATITUDE
+        if (polar) {
+            adhanPrayerTimes = adhanTimesAt(NEAREST_LATITUDE * sign(location.latitude))
+        }
 
         fun dateToZonedDateTime(dateObj: Date?): ZonedDateTime {
             return if (dateObj != null) {
-                dateObj.toInstant().atZone(zoneId)
+                // Adhan leaks wall-clock milliseconds into its results (06:35:00.457), which made
+                // identical inputs produce different instants; drop them so times are stable.
+                dateObj.toInstant().truncatedTo(ChronoUnit.SECONDS).atZone(zoneId)
             } else {
-                // Fallback to approximate noon if an extreme-latitude event is undefined.
+                // Last resort if even the nearest-latitude calculation has no value.
                 date.atTime(12, 0).atZone(zoneId)
             }
         }
 
-        val fajrZdt = dateToZonedDateTime(adhanPrayerTimes.fajr)
+        // The location's manual offsets are applied here, once, so the home screen,
+        // countdown notification and alarms all agree on the same tuned times.
+        val adjustments = location.adjustments
+        fun adjusted(dateObj: Date?, type: PrayerType): ZonedDateTime =
+            dateToZonedDateTime(dateObj).plusMinutes(adjustments.minutesFor(type).toLong())
+
+        val fajrZdt = adjusted(adhanPrayerTimes.fajr, PrayerType.FAJR)
         val sunriseZdt = dateToZonedDateTime(adhanPrayerTimes.sunrise)
-        val dhuhrZdt = dateToZonedDateTime(adhanPrayerTimes.dhuhr)
-        val asrZdt = dateToZonedDateTime(adhanPrayerTimes.asr)
-        val maghribZdt = dateToZonedDateTime(adhanPrayerTimes.maghrib)
-        val ishaZdt = dateToZonedDateTime(adhanPrayerTimes.isha)
+        val dhuhrZdt = adjusted(adhanPrayerTimes.dhuhr, PrayerType.DHUHR)
+        val asrZdt = adjusted(adhanPrayerTimes.asr, PrayerType.ASR)
+        val maghribZdt = adjusted(adhanPrayerTimes.maghrib, PrayerType.MAGHRIB)
+        val ishaZdt = adjusted(adhanPrayerTimes.isha, PrayerType.ISHA)
 
         val prayerMap = mapOf(
             PrayerType.FAJR to fajrZdt,
@@ -137,10 +165,14 @@ object PrayerTimeCalculator {
             prayerDateTimes = prayerMap,
             sunrise = sunriseZdt,
             locationZoneId = zoneId,
-            calculationMethod = method,
-            madhab = madhab
+            calculationMethod = effectiveMethod,
+            madhab = madhab,
+            usedNearestLatitude = polar
         )
     }
+
+    private fun com.batoulapps.adhan.PrayerTimes.hasMissingTimes(): Boolean =
+        listOf(fajr, sunrise, dhuhr, asr, maghrib, isha).any { it == null }
 
     /**
      * Determines the next upcoming prayer and computes the exact remaining countdown duration.
@@ -187,7 +219,14 @@ object PrayerTimeCalculator {
         } else {
             // All prayers for today have passed. Next prayer is tomorrow's Fajr!
             val tomorrow = currentDate.plusDays(1)
-            val nextDayTimetable = tomorrowTimetable ?: calculateTimetable(location, tomorrow)
+            // Reuse today's method and madhab: falling back to the defaults here used to make
+            // the after-Isha countdown disagree with the user's Settings.
+            val nextDayTimetable = tomorrowTimetable ?: calculateTimetable(
+                location,
+                tomorrow,
+                todayTimetable.calculationMethod,
+                todayTimetable.madhab
+            )
             targetPrayerType = PrayerType.FAJR
             targetZdt = nextDayTimetable.prayerDateTimes[PrayerType.FAJR]!!
             isTomorrowFajr = true

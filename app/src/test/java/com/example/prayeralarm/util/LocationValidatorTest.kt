@@ -128,5 +128,39 @@ class LocationValidatorTest {
         assertNotNull(result.latitudeError)
         assertNotNull(result.timezoneError)
     }
-}
 
+    @Test
+    fun adjustments_blankSignedAndInRange_areValid() {
+        listOf("", " ", "0", "5", "+2", "-3", "60", "-60").forEach {
+            assertNull("'$it' should be valid", LocationValidator.validateAdjustment(it))
+        }
+        assertEquals(2, LocationValidator.parseAdjustment("+2"))
+        assertEquals(-3, LocationValidator.parseAdjustment("-3"))
+        assertEquals(0, LocationValidator.parseAdjustment(""))
+    }
+
+    @Test
+    fun adjustments_outOfRangeOrMalformed_failValidation() {
+        listOf("61", "-61", "1.5", "abc", "--2").forEach {
+            assertNotNull("'$it' should be invalid", LocationValidator.validateAdjustment(it))
+        }
+        val result = LocationValidator.validate(
+            name = "Tunis",
+            latitudeStr = "36.8065",
+            longitudeStr = "10.1815",
+            timezoneId = "Africa/Tunis",
+            adjustmentStrs = listOf("0", "0", "99", "0", "0")
+        )
+        assertFalse(result.isValid)
+        assertNotNull(result.adjustmentError)
+    }
+
+    @Test
+    fun coordinates_acceptDecimalComma() {
+        assertEquals(34.7406, LocationValidator.parseCoordinate("34,7406")!!, 0.0)
+        assertEquals(-10.5, LocationValidator.parseCoordinate(" -10,5 ")!!, 0.0)
+        assertNull(LocationValidator.validateLatitude("34,7406"))
+        assertNull(LocationValidator.parseCoordinate("1,2.3"))
+        assertNotNull(LocationValidator.validateLongitude("1,2,3"))
+    }
+}

@@ -16,8 +16,8 @@ import kotlinx.coroutines.Dispatchers
  */
 @Database(
     entities = [LocationEntity::class],
-    version = 2,
-    exportSchema = false
+    version = 3,
+    exportSchema = true
 )
 abstract class PrayerAlarmDatabase : RoomDatabase() {
 
@@ -44,7 +44,7 @@ abstract class PrayerAlarmDatabase : RoomDatabase() {
                 PrayerAlarmDatabase::class.java,
                 DATABASE_NAME
             )
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
         }
 
@@ -76,6 +76,21 @@ abstract class PrayerAlarmDatabase : RoomDatabase() {
                         )
                     )
                 }
+            }
+        }
+
+        /**
+         * Adds per-location prayer-time minute adjustments (existing rows default to 0) and an
+         * optional per-location calculation method (NULL = follow the app setting).
+         */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                listOf("fajr", "dhuhr", "asr", "maghrib", "isha").forEach { prayer ->
+                    database.execSQL(
+                        "ALTER TABLE saved_locations ADD COLUMN ${prayer}_adjustment INTEGER NOT NULL DEFAULT 0"
+                    )
+                }
+                database.execSQL("ALTER TABLE saved_locations ADD COLUMN calculation_method TEXT")
             }
         }
     }

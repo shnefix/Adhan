@@ -4,6 +4,29 @@ All notable changes, fixes, and milestones across the 10 stages of the Prayer Al
 
 ---
 
+## [Locations: exact times per city] — 2026-11-03
+
+### Added
+- **Per-location minute adjustments** (`PrayerTimeAdjustments`): signed offsets per prayer (±60 min) so a city's times can match its mosque or official timetable. Applied once in `PrayerTimeCalculator`, so the home screen, countdown notification and Fajr alarms agree.
+- **Per-location calculation method**: optional override of the Settings method (`SavedLocation.calculationMethod`, NULL = follow Settings).
+- **Location form**: "Use my current location" (LocationManager, approximate permission is enough), city search (platform `Geocoder`, no API key), timezone suggestions while typing, the device timezone as default, and a live preview of today's times.
+- **Decimal commas** accepted in coordinates (`34,7406`).
+- Room schema export (`app/schemas/`) and on-device migration tests (`androidTest/.../PrayerAlarmDatabaseMigrationTest.kt`).
+
+### Changed
+- Database version 3: `MIGRATION_2_3` adds five `*_adjustment` columns (default 0) and a nullable `calculation_method` column.
+- `kotlin.daemon.jvmargs=-Xmx2048m` in `gradle.properties` (the compiler ran out of memory).
+
+### Fixed
+- Prayer times carried random wall-clock milliseconds from the Adhan library, so identical inputs gave slightly different instants (countdowns/alarms off by up to a minute). Times are now truncated to whole seconds.
+- After Isha, the fallback calculation of tomorrow's Fajr ignored the user's calculation method and madhab.
+- Polar day/night (no sunrise or sunset) produced 12:00 placeholders. Times now come from the nearest latitude where the sun rises and sets (65°), flagged by `CalculatedTimetable.usedNearestLatitude`.
+
+### Removed
+- Committed build logs, dumps and temp files; they are now covered by `.gitignore`.
+
+---
+
 ## [Stage 3: Location Management with Room] — 2026-10-29
 
 ### Status: Complete & Verified

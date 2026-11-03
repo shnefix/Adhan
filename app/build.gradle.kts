@@ -40,6 +40,12 @@ android {
     }
 }
 
+// Room writes one JSON file per database version here; commit them so future
+// migrations can be checked against the exact previous schema.
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

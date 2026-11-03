@@ -1,5 +1,6 @@
 package com.example.prayeralarm.util
 
+import com.example.prayeralarm.domain.model.PrayerTimeAdjustments
 import java.time.ZoneId
 
 /**
@@ -10,7 +11,8 @@ data class ValidationResult(
     val nameError: String? = null,
     val latitudeError: String? = null,
     val longitudeError: String? = null,
-    val timezoneError: String? = null
+    val timezoneError: String? = null,
+    val adjustmentError: String? = null
 )
 
 /**
@@ -30,22 +32,49 @@ object LocationValidator {
         name: String,
         latitudeStr: String,
         longitudeStr: String,
-        timezoneId: String
+        timezoneId: String,
+        adjustmentStrs: List<String> = emptyList()
     ): ValidationResult {
         val nameError = validateName(name)
         val latError = validateLatitude(latitudeStr)
         val lonError = validateLongitude(longitudeStr)
         val tzError = validateTimezoneId(timezoneId)
+        val adjError = adjustmentStrs.firstNotNullOfOrNull { validateAdjustment(it) }
 
-        val isValid = nameError == null && latError == null && lonError == null && tzError == null
+        val isValid = nameError == null && latError == null && lonError == null &&
+            tzError == null && adjError == null
         return ValidationResult(
             isValid = isValid,
             nameError = nameError,
             latitudeError = latError,
             longitudeError = lonError,
-            timezoneError = tzError
+            timezoneError = tzError,
+            adjustmentError = adjError
         )
     }
+
+    /** Blank means 0; otherwise a whole number of minutes within ±[PrayerTimeAdjustments.MAX_MINUTES]. */
+    fun validateAdjustment(minutesStr: String): String? {
+        val trimmed = minutesStr.trim()
+        if (trimmed.isEmpty()) return null
+        val minutes = trimmed.removePrefix("+").toIntOrNull()
+            ?: return "Adjustments must be whole minutes (e.g. 2 or -3)"
+        val max = PrayerTimeAdjustments.MAX_MINUTES
+        return if (minutes in -max..max) null else "Adjustments must be between -$max and +$max minutes"
+    }
+
+    /**
+     * Parses a decimal-degree coordinate. A decimal comma ("34,7406") is accepted because
+     * French and Arabic keyboards produce it; anything with more than one separator is rejected.
+     */
+    fun parseCoordinate(value: String): Double? {
+        val normalized = value.trim().replace(',', '.')
+        if (normalized.count { it == '.' } > 1) return null
+        return normalized.toDoubleOrNull()
+    }
+
+    fun parseAdjustment(minutesStr: String): Int =
+        minutesStr.trim().removePrefix("+").toIntOrNull() ?: 0
 
     fun validateName(name: String): String? {
         val trimmed = name.trim()
@@ -58,9 +87,8 @@ object LocationValidator {
     }
 
     fun validateLatitude(latitudeStr: String): String? {
-        val trimmed = latitudeStr.trim()
-        if (trimmed.isEmpty()) return "Latitude is required"
-        val lat = trimmed.toDoubleOrNull() ?: return "Latitude must be a valid decimal number"
+        if (latitudeStr.isBlank()) return "Latitude is required"
+        val lat = parseCoordinate(latitudeStr) ?: return "Latitude must be a valid decimal number"
         if (!lat.isFinite()) return "Latitude must be a finite decimal number"
         return if (lat in MIN_LATITUDE..MAX_LATITUDE) {
             null
@@ -70,9 +98,8 @@ object LocationValidator {
     }
 
     fun validateLongitude(longitudeStr: String): String? {
-        val trimmed = longitudeStr.trim()
-        if (trimmed.isEmpty()) return "Longitude is required"
-        val lon = trimmed.toDoubleOrNull() ?: return "Longitude must be a valid decimal number"
+        if (longitudeStr.isBlank()) return "Longitude is required"
+        val lon = parseCoordinate(longitudeStr) ?: return "Longitude must be a valid decimal number"
         if (!lon.isFinite()) return "Longitude must be a finite decimal number"
         return if (lon in MIN_LONGITUDE..MAX_LONGITUDE) {
             null

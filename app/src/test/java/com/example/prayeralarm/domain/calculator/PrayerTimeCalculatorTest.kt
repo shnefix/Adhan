@@ -1,5 +1,6 @@
 package com.example.prayeralarm.domain.calculator
 
+import com.example.prayeralarm.domain.model.PrayerTimeAdjustments
 import com.example.prayeralarm.domain.model.PrayerType
 import com.example.prayeralarm.domain.model.SavedLocation
 import org.junit.Assert.assertEquals
@@ -43,6 +44,90 @@ class PrayerTimeCalculatorTest {
     )
 
     private val testDate = LocalDate.of(2026, 10, 29)
+
+    @Test
+    fun locationAdjustments_shiftEachPrayerByItsOwnMinutes() {
+        val adjustments = PrayerTimeAdjustments(fajr = 2, dhuhr = -1, asr = 0, maghrib = 3, isha = -5)
+        val base = PrayerTimeCalculator.calculateTimetable(mahdia, testDate)
+        val tuned = PrayerTimeCalculator.calculateTimetable(mahdia.copy(adjustments = adjustments), testDate)
+
+        PrayerType.entries.forEach { type ->
+            val delta = Duration.between(base.prayerDateTimes[type], tuned.prayerDateTimes[type]).toMinutes()
+            assertEquals("$type offset", adjustments.minutesFor(type).toLong(), delta)
+            assertEquals(tuned.prayerDateTimes[type]!!.toLocalTime(), tuned.items.first { it.type == type }.time)
+        }
+        assertEquals("Sunrise is not adjusted", base.sunrise, tuned.sunrise)
+    }
+
+    @Test
+    fun locationMethodOverride_winsOverAppSetting() {
+        val egyptianMahdia = mahdia.copy(calculationMethod = PrayerCalculationMethod.EGYPTIAN)
+        val overridden = PrayerTimeCalculator.calculateTimetable(
+            egyptianMahdia, testDate, PrayerCalculationMethod.TUNISIA
+        )
+        val egyptian = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, PrayerCalculationMethod.EGYPTIAN)
+        val tunisia = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, PrayerCalculationMethod.TUNISIA)
+
+        assertEquals(PrayerCalculationMethod.EGYPTIAN, overridden.calculationMethod)
+        assertEquals(egyptian.prayerDateTimes, overridden.prayerDateTimes)
+        // Egyptian uses a 19.5° Fajr angle vs 18°, so Fajr must actually move.
+        assertNotEquals(tunisia.prayerDateTimes[PrayerType.FAJR], overridden.prayerDateTimes[PrayerType.FAJR])
+    }
+
+    @Test
+    fun polarDay_usesNearestLatitudeInsteadOfNoonPlaceholders() {
+        val tromso = SavedLocation(name = "Tromso", latitude = 69.6496, longitude = 18.9560, timeZoneId = "Europe/Oslo")
+        val midsummer = LocalDate.of(2026, 6, 21)
+
+        val timetable = PrayerTimeCalculator.calculateTimetable(tromso, midsummer, PrayerCalculationMethod.MUSLIM_WORLD_LEAGUE)
+
+        assertTrue(timetable.usedNearestLatitude)
+        // Isha can fall after midnight in midsummer, so compare instants, not clock times.
+        val instants = PrayerType.entries.map { timetable.prayerDateTimes[it]!!.toInstant() }
+        assertEquals("Prayers are in order", instants.sorted(), instants)
+        assertEquals("No noon placeholders", 1, timetable.items.count { it.time.hour == 12 })
+        assertTrue(timetable.sunrise.toLocalTime().isBefore(LocalTime.of(5, 0)))
+    }
+
+    @Test
+    fun ordinaryLatitude_doesNotUseNearestLatitude() {
+        assertFalse(PrayerTimeCalculator.calculateTimetable(mahdia, testDate).usedNearestLatitude)
+    }
+
+    @Test
+    fun afterIsha_tomorrowFallbackKeepsTodaysMethod() {
+        val today = PrayerTimeCalculator.calculateTimetable(mahdia, testDate, PrayerCalculationMethod.EGYPTIAN)
+        val afterIsha = today.prayerDateTimes[PrayerType.ISHA]!!.toInstant().plusSeconds(60)
+
+        val countdown = PrayerTimeCalculator.computeNextPrayerAndCountdown(mahdia, testDate, afterIsha, today)
+
+        val expected = PrayerTimeCalculator.calculateTimetable(mahdia, testDate.plusDays(1), PrayerCalculationMethod.EGYPTIAN)
+        assertEquals(expected.prayerDateTimes[PrayerType.FAJR], countdown.nextPrayerDateTime)
+    }
+
+    @Test
+    fun calculateTimetable_isStableAcrossCalls() {
+        val first = PrayerTimeCalculator.calculateTimetable(mahdia, testDate)
+        Thread.sleep(5)
+        val second = PrayerTimeCalculator.calculateTimetable(mahdia, testDate)
+        assertEquals(first.prayerDateTimes, second.prayerDateTimes)
+        assertEquals(first.sunrise, second.sunrise)
+    }
+
+    @Test
+    fun locationAdjustments_driveTheCountdownTarget() {
+        val tunedMahdia = mahdia.copy(adjustments = PrayerTimeAdjustments(dhuhr = 4))
+        val today = PrayerTimeCalculator.calculateTimetable(tunedMahdia, testDate)
+        val untunedDhuhr = PrayerTimeCalculator.calculateTimetable(mahdia, testDate)
+            .prayerDateTimes[PrayerType.DHUHR]!!.toInstant()
+
+        // Between the astronomical Dhuhr and the tuned one, Dhuhr is still upcoming.
+        val countdown = PrayerTimeCalculator.computeNextPrayerAndCountdown(
+            tunedMahdia, testDate, untunedDhuhr.plusSeconds(60), today
+        )
+        assertEquals(PrayerType.DHUHR, countdown.nextPrayerItem?.type)
+        assertEquals(3L, countdown.remainingMinutes)
+    }
 
     @Test
     fun calculateTimetable_producesChronologicalPrayersIncludingSunrise() {
