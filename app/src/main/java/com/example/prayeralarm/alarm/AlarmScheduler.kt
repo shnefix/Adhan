@@ -33,7 +33,8 @@ interface PrayerAlarmScheduler {
  * Why setAlarmClock instead of setExactAndAllowWhileIdle: it is the API intended for
  * user-facing alarms. It is exempt from Doze/standby batching, shows the system alarm icon,
  * and its firing grants the app permission to start the ringing foreground service.
- * It still needs SCHEDULE_EXACT_ALARM on Android 12+ (denied by default on Android 14+).
+ * It needs exact-alarm access: USE_EXACT_ALARM (granted at install) on Android 13+,
+ * SCHEDULE_EXACT_ALARM (user-granted) on Android 12.
  *
  * Identity: one PendingIntent per request code. Scheduling the same code again REPLACES
  * the previous alarm, so editing settings can never create duplicates.

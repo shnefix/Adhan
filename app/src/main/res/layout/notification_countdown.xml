@@ -24,8 +24,24 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <!-- Hours and minutes ("9h 54m"), re-posted once a minute. -->
         <TextView
+            android:id="@+id/notification_countdown_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFeatureSettings="tnum"
+            android:maxLines="1"
+            android:textColor="@color/notification_countdown"
+            android:textSize="26sp"
+            android:textStyle="bold" />
+
+        <!-- Last 10 minutes: counts down the seconds by itself. -->
+        <Chronometer
             android:id="@+id/notification_countdown"
+            android:countDown="true"
+            android:visibility="gone"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"

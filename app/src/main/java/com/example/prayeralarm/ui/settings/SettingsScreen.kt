@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.material.icons.filled.BatteryAlert
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
@@ -46,6 +48,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +67,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.example.prayeralarm.alarm.CountdownNotificationService
 import com.example.prayeralarm.domain.calculator.PrayerCalculationMethod
 import com.batoulapps.adhan.Madhab
@@ -79,6 +85,10 @@ import com.example.prayeralarm.ui.theme.OnGold
 import com.example.prayeralarm.ui.theme.OnGoldContainer
 import com.example.prayeralarm.ui.theme.TextPrimary
 import com.example.prayeralarm.ui.theme.TextSecondary
+
+private fun ignoringBatteryOptimizations(context: Context): Boolean =
+    context.getSystemService(PowerManager::class.java)
+        .isIgnoringBatteryOptimizations(context.packageName)
 
 private fun notificationsAllowed(context: Context): Boolean =
     NotificationManagerCompat.from(context).areNotificationsEnabled() &&
@@ -113,6 +123,30 @@ fun SettingsScreen(
         if (planConfig.enabled) {
             CountdownNotificationService.start(context)
         }
+    }
+
+    // Battery optimization lets many phones (Xiaomi, Samsung, Oppo...) kill the countdown
+    // and delay alarms. The user changes it in a system dialog, so re-check on return.
+    var batteryUnrestricted by remember { mutableStateOf(ignoringBatteryOptimizations(context)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                batteryUnrestricted = ignoringBatteryOptimizations(context)
+                notificationsGranted = notificationsAllowed(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    val requestBatteryExemption = {
+        context.startActivity(
+            Intent(
+                Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                Uri.parse("package:${context.packageName}")
+            )
+        )
     }
 
     val openExactAlarmPermission = {
@@ -317,6 +351,24 @@ fun SettingsScreen(
             }
             if (!exactAlarmAvailable && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 ActionButton("Open exact-alarm permission", openExactAlarmPermission)
+            }
+            ItemDivider()
+            SettingsItem(
+                icon = Icons.Default.BatteryAlert,
+                title = "Background running",
+                subtitle = if (batteryUnrestricted) {
+                    "Adhan can keep running in the background."
+                } else {
+                    "Battery optimization may stop alarms and the countdown."
+                }
+            ) {
+                StatusPill(
+                    text = if (batteryUnrestricted) "Allowed" else "Restricted",
+                    positive = batteryUnrestricted
+                )
+            }
+            if (!batteryUnrestricted) {
+                ActionButton("Allow background running", requestBatteryExemption)
             }
         }
 

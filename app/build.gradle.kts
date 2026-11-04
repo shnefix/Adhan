@@ -24,8 +24,10 @@ android {
         applicationId = "com.example.prayeralarm"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // Increase versionCode for every APK you share: phones only install an update
+        // whose versionCode is higher than the installed one.
+        versionCode = 2
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
