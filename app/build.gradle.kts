@@ -44,7 +44,9 @@ android {
     buildTypes {
         release {
             if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            // R8 strips unused library code (notably material-icons-extended); keeps the APK small.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
