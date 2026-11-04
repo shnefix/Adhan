@@ -99,9 +99,13 @@ fun MainScreen() {
 
     // The on/off switch now lives in Settings, so the persistent countdown notification
     // is started/stopped here, where it is always active.
-    val alarmConfig by alarmPlanViewModel.config.collectAsState()
-    LaunchedEffect(alarmConfig.enabled) {
-        if (alarmConfig.enabled) {
+    // Read the stored value directly: the view model starts from a default (disabled)
+    // config, which would stop a running service every time the app is opened.
+    val storedAlarmConfig by context.alarmPlanPreferences.config.collectAsState(initial = null)
+    val alarmEnabled = storedAlarmConfig?.enabled
+    LaunchedEffect(alarmEnabled) {
+        if (alarmEnabled == null) return@LaunchedEffect
+        if (alarmEnabled) {
             CountdownNotificationService.start(context)
         } else {
             CountdownNotificationService.stop(context)
