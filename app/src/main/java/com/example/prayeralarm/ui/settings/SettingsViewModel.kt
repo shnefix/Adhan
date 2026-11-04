@@ -31,6 +31,11 @@ class SettingsViewModel(
         preferencesManager?.calculationMethod ?: flowOf(PrayerCalculationMethod.DEFAULT)
 
     val madhab: Flow<Madhab> = preferencesManager?.madhab ?: flowOf(Madhab.SHAFI)
+    val hijriAdjustment: Flow<Int> = preferencesManager?.hijriAdjustment ?: flowOf(0)
+    fun setHijriAdjustment(days: Int) {
+        preferencesManager?.let { viewModelScope.launch { it.setHijriAdjustment(days) } }
+    }
+
     fun setMadhab(m: Madhab) { preferencesManager?.let { viewModelScope.launch { it.setMadhab(m) } } }
 
     fun setCalculationMethod(method: PrayerCalculationMethod) {

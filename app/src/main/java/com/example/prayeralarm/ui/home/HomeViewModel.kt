@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.prayeralarm.data.repository.LocationRepository
 import com.example.prayeralarm.alarm.CountdownNotificationService
+import com.example.prayeralarm.domain.calendar.HijriDate
 import com.example.prayeralarm.domain.calculator.CalculatedTimetable
 import com.example.prayeralarm.domain.calculator.NextPrayerCountdown
 import com.example.prayeralarm.domain.calculator.PrayerCalculationSettings
@@ -36,7 +37,8 @@ class HomeViewModel(
     private val clock: Clock = Clock.systemUTC(),
     private val alarmPlanPreferences: AlarmPlanPreferences? = null,
     private val notificationContext: Context? = null,
-    private val calculationSettings: Flow<PrayerCalculationSettings>? = null
+    private val calculationSettings: Flow<PrayerCalculationSettings>? = null,
+    private val hijriAdjustment: Flow<Int>? = null
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -48,11 +50,13 @@ class HomeViewModel(
     private var cachedTomorrowTimetable: CalculatedTimetable? = null
     private var persistentNotificationEnabled = false
     private var settings = PrayerCalculationSettings()
+    private var hijriAdjustmentDays = 0
 
     init {
         observeActiveLocation()
         observeNotificationPlan()
         observeCalculationSettings()
+        observeHijriAdjustment()
         startCountdownTicker()
     }
 
@@ -76,6 +80,16 @@ class HomeViewModel(
         val flow = calculationSettings ?: return
         viewModelScope.launch {
             flow.collect { s -> settings = s; activeLocation?.let { recalculateTimetable(it) } }
+        }
+    }
+
+    private fun observeHijriAdjustment() {
+        val flow = hijriAdjustment ?: return
+        viewModelScope.launch {
+            flow.collect { days ->
+                hijriAdjustmentDays = days
+                _uiState.update { it.copy(hijriDate = HijriDate.format(it.currentDate, days)) }
+            }
         }
     }
 
@@ -127,6 +141,7 @@ class HomeViewModel(
             current.copy(
                 selectedLocation = location,
                 currentDate = today,
+                hijriDate = HijriDate.format(today, hijriAdjustmentDays),
                 prayerTimetable = updatedItems,
                 nextPrayer = countdown.nextPrayerItem,
                 remainingHours = countdown.remainingHours,
@@ -230,7 +245,8 @@ class HomeViewModel(
         private val clock: Clock = Clock.systemUTC(),
         private val alarmPlanPreferences: AlarmPlanPreferences? = null,
         private val notificationContext: Context? = null,
-        private val calculationSettings: Flow<PrayerCalculationSettings>? = null
+        private val calculationSettings: Flow<PrayerCalculationSettings>? = null,
+        private val hijriAdjustment: Flow<Int>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -240,7 +256,8 @@ class HomeViewModel(
                     clock,
                     alarmPlanPreferences,
                     notificationContext,
-                    calculationSettings
+                    calculationSettings,
+                    hijriAdjustment
                 ) as T
             }
             throw IllegalArgumentException("Unknown ViewModel class")
@@ -264,7 +281,7 @@ class HomeViewModel(
             return HomeUiState(
                 selectedLocation = sampleLocation,
                 currentDate = LocalDate.now(),
-                hijriDate = "18 Jumada al-Awwal 1448",
+                hijriDate = HijriDate.format(LocalDate.now()),
                 nextPrayer = timetable.items[1],
                 remainingHours = 2,
                 remainingMinutes = 15,

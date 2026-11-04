@@ -73,6 +73,7 @@ fun MainScreen() {
             alarmPlanPreferences = context.alarmPlanPreferences,
             notificationContext = context.applicationContext,
             calculationSettings = context.preferencesManager.calculationSettings,
+            hijriAdjustment = context.preferencesManager.hijriAdjustment,
             clock = clock
         )
     )

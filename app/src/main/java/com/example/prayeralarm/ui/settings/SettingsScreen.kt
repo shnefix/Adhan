@@ -24,12 +24,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.BatteryAlert
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
@@ -63,6 +65,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
@@ -71,6 +74,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.example.prayeralarm.alarm.CountdownNotificationService
 import com.example.prayeralarm.domain.calculator.PrayerCalculationMethod
+import com.example.prayeralarm.domain.calendar.HijriDate
+import java.time.LocalDate
 import com.batoulapps.adhan.Madhab
 import com.example.prayeralarm.ui.alarms.AlarmPlanViewModel
 import com.example.prayeralarm.ui.theme.GoldPrimary
@@ -109,6 +114,7 @@ fun SettingsScreen(
     val selectedLocation by viewModel.selectedLocation.collectAsState(initial = null)
     val calculationMethod by viewModel.calculationMethod.collectAsState(initial = PrayerCalculationMethod.DEFAULT)
     val madhab by viewModel.madhab.collectAsState(initial = Madhab.SHAFI)
+    val hijriAdjustment by viewModel.hijriAdjustment.collectAsState(initial = 0)
     val planConfig by alarmPlanViewModel.config.collectAsState()
 
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -293,6 +299,17 @@ fun SettingsScreen(
             }
         }
 
+        SectionLabel("Hijri date", "Shift the calculated date when your country announces the month a day earlier or later.")
+        SettingsCard {
+            SettingsItem(
+                icon = Icons.Default.CalendarMonth,
+                title = "Date adjustment",
+                subtitle = HijriDate.format(LocalDate.now(), hijriAdjustment)
+            ) {
+                DayAdjuster(value = hijriAdjustment, onChange = viewModel::setHijriAdjustment)
+            }
+        }
+
         // ---- Fajr alarms (moved here from the Fajr Alarms screen) ----
         SectionLabel(title = "Fajr alarms")
         SettingsCard {
@@ -453,6 +470,47 @@ private fun ItemDivider() {
 }
 
 /** One row: gold icon, title + optional subtitle on the left, trailing content on the right. */
+/** − / +1 day / + control for the Hijri date adjustment. */
+@Composable
+private fun DayAdjuster(value: Int, onChange: (Int) -> Unit) {
+    val shape = RoundedCornerShape(20.dp)
+    Row(
+        modifier = Modifier
+            .height(40.dp)
+            .clip(shape)
+            .border(1.dp, NavyBorder, shape),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AdjustButton("−", "One day earlier", enabled = value > HijriDate.MIN_ADJUSTMENT) { onChange(value - 1) }
+        Text(
+            text = if (value == 0) "0" else "%+d".format(value),
+            color = TextPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.width(32.dp),
+            textAlign = TextAlign.Center
+        )
+        AdjustButton("+", "One day later", enabled = value < HijriDate.MAX_ADJUSTMENT) { onChange(value + 1) }
+    }
+}
+
+@Composable
+private fun AdjustButton(symbol: String, description: String, enabled: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clickable(enabled = enabled, role = Role.Button, onClickLabel = description, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = symbol,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold,
+            color = if (enabled) TextPrimary else TextSecondary.copy(alpha = 0.4f)
+        )
+    }
+}
+
 @Composable
 private fun SettingsItem(
     icon: ImageVector,

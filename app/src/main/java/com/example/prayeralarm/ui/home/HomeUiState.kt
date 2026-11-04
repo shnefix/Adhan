@@ -20,7 +20,7 @@ data class HomeUiState(
         isDefault = true
     ),
     val currentDate: LocalDate = LocalDate.now(),
-    val hijriDate: String = "18 Jumada al-Awwal 1448", // Temporary representative hijri date
+    val hijriDate: String = "",
     val nextPrayer: PrayerScheduleItem? = null,
     val remainingHours: Long = 2,
     val remainingMinutes: Long = 15,

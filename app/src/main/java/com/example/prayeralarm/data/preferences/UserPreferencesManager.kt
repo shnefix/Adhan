@@ -32,6 +32,7 @@ class UserPreferencesManager(private val context: Context) : LocationSelectionSt
         val KEY_SELECTED_LOCATION_ID = longPreferencesKey("selected_location_id")
         val KEY_CALCULATION_METHOD = stringPreferencesKey("calculation_method")
         private val KEY_ASR_MADHAB = stringPreferencesKey("asr_madhab")
+        private val KEY_HIJRI_ADJUSTMENT = intPreferencesKey("hijri_adjustment_days")
 
         // Alarm settings. KEY_ALARM_ENABLED is unchanged so the master switch survives upgrade.
         private val KEY_ALARM_ENABLED = booleanPreferencesKey("alarm_enabled")
@@ -74,6 +75,13 @@ class UserPreferencesManager(private val context: Context) : LocationSelectionSt
 
     suspend fun setMadhab(madhab: Madhab) {
         context.dataStore.edit { it[KEY_ASR_MADHAB] = madhab.name }
+    }
+
+    /** Days added to the calculated Hijri date to match the locally announced one. */
+    val hijriAdjustment: Flow<Int> = prefsFlow.map { it[KEY_HIJRI_ADJUSTMENT] ?: 0 }
+
+    suspend fun setHijriAdjustment(days: Int) {
+        context.dataStore.edit { it[KEY_HIJRI_ADJUSTMENT] = days }
     }
 
     // ---- Location selection ---------------------------------------------------------------
